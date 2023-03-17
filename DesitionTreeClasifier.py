@@ -130,6 +130,7 @@ class DesicionTree:
         return entropy
     
     def _getLeaf(self, y):
+        ''' Asigna valor a una hoja del arbol '''
         y = list(y)
         return max(y, key=y.count)
     
