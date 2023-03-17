@@ -2,6 +2,11 @@
 Universidad del Valle de Guatemala
 Inteligencia Artificial
 
+Autores:
+ - Diego Cordova
+ - Paola Contreras
+ - Cristian Aguirre
+
 Implementacion de arbol de decision
 Referencia: https://www.youtube.com/watch?v=sgQAhG5Q7iY
 '''
@@ -10,6 +15,16 @@ import pandas as pd
 import numpy as np
 
 class Node:
+    ''' Objeto de nodo para construccion de arboles
+
+    Atributos:
+        - feature_index (int) = indice del feature en el dataser
+        - tresshld (int) = treshold que determina la clase en el arbol
+        - left (Node) = hijo izquierdo del arbol
+        - right (Node) = hijo derecho del arbol
+        - info_gain(int) = ganancia de informacion
+        - value (any) = valor del nodo en caso sea una hoja
+    '''
     def __init__(
         self,
         feature_index=None,
@@ -28,6 +43,14 @@ class Node:
         self.value = value
 
 class DesicionTree:
+    ''' Objeto de implementacion de arbol de decision
+
+    Atributos:
+        - feature_index (int) = indice del feature en el dataser
+        - tresshld (int) = treshold que determina la clase en el arbol
+        - max_depth (Node) = hijo izquierdo del arbol
+    '''
+
     def __init__(self, max_depth:int=2, min_split:int=2) -> None:
         self.root = None
 
@@ -35,8 +58,7 @@ class DesicionTree:
         self.max_depth:int = max_depth
 
     def _fill_tree(self, dataset, actual_depth=0) -> Node:
-        ''' El dataframe debe tener la variable objetivo en la ultima columna '''
-
+        ''' LLena el arbol recursivamente segun los niveles especificados en el cosntructor '''
         X = dataset[:, :-1]
         y = dataset[:, -1]
         sample_count, feature_count = np.shape(X)
@@ -55,6 +77,7 @@ class DesicionTree:
         return Node(value=leaf)
 
     def _getSplit(self, dataset, feature_count:int) -> dict:
+        ''' Retorna la mejor forma de hcaer split de la data '''
         split:dict = {}
         max_gain = -9999999999
 
@@ -83,27 +106,21 @@ class DesicionTree:
         return split
 
     def _split(self, dataset, feature_index, threshold):
+        ''' hace split de la data segun un treshold '''
         data_left = np.array([row for row in dataset if row[feature_index] <= threshold])
         data_right = np.array([row for row in dataset if row[feature_index] > threshold])
         return data_left, data_right
     
-    def _info_gain(self, parent, left, right):
+    def _info_gain(self, parent, left, right) -> int:
+        ''' Calcula el info para un nivel de datos '''
         left_w = len(left) / len(parent)
         right_w = len(right) / len(parent)
 
         gain = self._gini_index(parent) - (left_w * self._gini_index(left) + right_w * self._gini_index(right))
         return gain
-
-    def _gini_index(self, y):
-        labels = np.unique(y)
-        gini = 0
-
-        for clas in labels:
-            pi = len(y[y == clas] / len(y))
-            gini += pi**2
-        return 1 - gini
     
-    def _gini_index(self, y):
+    def _gini_index(self, y) -> int:
+        ''' Calcula el coeficiente de gini para un conjunto de datos '''
         labels = np.unique(y)
         entropy = 0
 
@@ -117,13 +134,16 @@ class DesicionTree:
         return max(y, key=y.count)
     
     def fit(self, X, y):
+        ''' realiza el entreno del modelo (Llena el arbol) '''
         dataset = np.concatenate((X, y), axis=1)
         self.root = self._fill_tree(dataset)
 
-    def predict(self, X):
+    def predict(self, X) -> list:
+        ''' Realiza predicciones segun un conjunto de datos y el modelo entrenado '''
         return [ self.make_prediction(x, self.root) for x in X ]
 
     def make_prediction(self, x, tree:Node):
+        ''' Realiza la prediccion para un dato en especifico'''
         tree = tree[0] if type(tree) == tuple else tree
         if tree.value is not None: return tree.value 
 
